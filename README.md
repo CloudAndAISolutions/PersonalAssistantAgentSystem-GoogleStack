@@ -1,4 +1,4 @@
-# PersonalAssistantAgentSystem-GoogleStack
+# PersonalAssistantAgentSystem- use Google Tech Stack
 
 # Vibe Coding - 1st prompt - High Level requirement
 I am a heavy google users, I use Gmail for my main communication channel, Calender for my daily activities and payment reminder, Task for short term goals, Photos for capturing whatever I saw interesting during the day.
