@@ -77,6 +77,13 @@ class GmailTool:
 
     def send_email(self, to: str, subject: str, html_body: str):
         """Sends an HTML email."""
+        if to == 'me':
+            try:
+                profile = self.service.users().getProfile(userId=self.user_id).execute()
+                to = profile.get('emailAddress', 'me')
+            except Exception:
+                pass
+                
         message = EmailMessage()
         message.set_content(html_body, subtype='html')
         message['To'] = to

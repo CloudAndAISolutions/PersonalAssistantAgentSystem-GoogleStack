@@ -7,6 +7,9 @@ load_dotenv()
 class Config:
     """Application configuration loaded from environment variables."""
     
+    # Model Selection
+    model_name = "gemini-2.5-flash"
+    
     # AI Backend Strategy
     USE_VERTEXAI = os.getenv('GOOGLE_GENAI_USE_VERTEXAI', 'false').lower() == 'true'
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')

@@ -17,3 +17,10 @@
   - [x] Create `src/tools/docs_tool.py` (creating drafts)
 - [x] Testing
   - [x] Test tools locally using ADK CLI (`adk web` or simple scripts)
+
+# Phase 2: Agents — Multi-Agent Layer with Google ADK
+- [x] Morning Feed Agent (Fetches events/tasks, formats HTML newsletter briefing)
+- [x] Journalist Agent (Collects daily footprints, summarizes bulleted highlights)
+- [x] Writer Agent (Transcribes daily highlights to reflective HTML blog narratives)
+- [x] Coordinator Agent (Orchestrates triggers, utilizing `SequentialAgent` for the evening flow)
+- [x] End-to-End Verification (All triggers verified, email sent, Google Docs draft created successfully)
