@@ -227,7 +227,7 @@ Instructions:
 - Use emoji sparingly for visual structure
 - Keep it under 250 words`;
 
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
   
   try {
     const response = UrlFetchApp.fetch(url + '?key=' + GEMINI_API_KEY, {

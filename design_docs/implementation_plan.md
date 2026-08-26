@@ -25,13 +25,12 @@ graph TD
         GMAIL["Gmail API<br/>Read / Draft / Send"]
         CAL["Calendar API<br/>Events / Reminders"]
         TASKS["Tasks API<br/>Task Lists / Items"]
-        PHOTOS["Photos Library API<br/>Media Items / Albums"]
         DOCS["Google Docs + Drive API<br/>Create Draft Docs (Dev)"]
         BLOGGER["Blogger API<br/>Create Draft Posts (Prod)"]
     end
 
     subgraph "🤖 AI Layer (Google Only — No PII Leakage)"
-        GEMINI["Gemini 2.5 Flash<br/>Mode A: Gemini API (AI Pro) ← DEFAULT<br/>Mode B: Vertex AI (Enterprise)"]
+        GEMINI["Gemini 3.5 Flash<br/>Mode A: Gemini API (AI Pro) ← DEFAULT<br/>Mode B: Vertex AI (Enterprise)"]
     end
 
     subgraph "🗄️ Storage (Google Only)"
@@ -53,11 +52,8 @@ graph TD
 
     JOUR --> GMAIL
     JOUR --> CAL
-    JOUR --> PHOTOS
-
     WRIT --> GMAIL
     WRIT --> CAL
-    WRIT --> PHOTOS
     WRIT --> DOCS
     WRIT --> BLOGGER
 
@@ -88,7 +84,7 @@ GOOGLE_API_KEY=your-gemini-api-key-from-aistudio
 
 | Aspect | Detail |
 |---|---|
-| **Model** | Gemini 2.5 Flash via Gemini API (`generativelanguage.googleapis.com`) |
+| **Model** | Gemini 3.5 Flash via Gemini API (`generativelanguage.googleapis.com`) |
 | **Cost** | **$0** — included in your AI Pro subscription |
 | **Data training** | Opt-out via Google Account → Data & Privacy → Gemini Apps Activity → **OFF** |
 | **Auth** | Simple API key from [AI Studio](https://aistudio.google.com/app/apikey) |
@@ -109,7 +105,7 @@ GOOGLE_CLOUD_LOCATION=us-central1
 
 | Aspect | Detail |
 |---|---|
-| **Model** | Gemini 2.5 Flash via Vertex AI (`aiplatform.googleapis.com`) |
+| **Model** | Gemini 3.5 Flash via Vertex AI (`aiplatform.googleapis.com`) |
 | **Cost** | ~$0.15/1M input tokens, ~$0.60/1M output tokens (Flash) |
 | **Data training** | **Never** — contractual Cloud Data Processing Addendum |
 | **Auth** | Service Account / Application Default Credentials |
@@ -137,9 +133,9 @@ GOOGLE_CLOUD_LOCATION=us-central1
 
 | Concern | Solution |
 |---|---|
-| AI Model | Gemini 2.5 Flash — **Mode A**: Gemini API (AI Pro) / **Mode B**: Vertex AI |
+| AI Model | Gemini 3.5 Flash — **Mode A**: Gemini API (AI Pro) / **Mode B**: Vertex AI |
 | Data Transit | All API calls stay within Google's network |
-| Authentication | **OAuth 2.0** for personal Google account access (Gmail, Calendar, Photos, Tasks) |
+| Authentication | **OAuth 2.0** for personal Google account access (Gmail, Calendar, Tasks) |
 | Secrets | `.env` file locally / **Google Secret Manager** in production |
 | Compute | Local Python (dev) / **Cloud Run** (prod — within your GCP project) |
 | Storage | Local SQLite (dev) / **Firestore** + **Cloud Storage** (prod) |
@@ -204,8 +200,7 @@ PersonalAssistantAgentSystem-GoogleStack/
 │   │   ├── gmail_tool.py             # Gmail read/send operations
 │   │   ├── calendar_tool.py          # Calendar events reader
 │   │   ├── tasks_tool.py             # Google Tasks reader
-│   │   ├── photos_tool.py            # Photos metadata + EXIF GPS extraction
-│   │   ├── docs_tool.py              # Google Docs creation (dev/personal mode)
+│   │   │   ├── docs_tool.py              # Google Docs creation (dev/personal mode)
 │   │   └── blogger_tool.py           # Blogger post creation (production mode)
 │   ├── services/
 │   │   ├── __init__.py
@@ -237,7 +232,7 @@ PersonalAssistantAgentSystem-GoogleStack/
 
 ### Component 1: Core Infrastructure
 
-#### [NEW] [pyproject.toml](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/pyproject.toml)
+#### [NEW] [pyproject.toml]
 
 Python project configuration with dependencies:
 - `google-adk` — Agent Development Kit (works with both Gemini API and Vertex AI)
@@ -252,11 +247,10 @@ Python project configuration with dependencies:
 - `exifread` — Photo EXIF/GPS extraction
 - `python-dotenv` — Environment variable loading (.env file support)
 
-#### [NEW] [Dockerfile](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/Dockerfile)
-
+#### [NEW] [Dockerfile]
 Slim Python 3.12 container for Cloud Run deployment.
 
-#### [NEW] [src/config.py](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/src/config.py)
+#### [NEW] [src/config.py]
 
 Centralized configuration with AI mode detection:
 
@@ -270,10 +264,10 @@ class Config:
     gcp_location: str = os.getenv("GOOGLE_CLOUD_LOCATION", "")   # Mode B
     
     # Model selection (same model name works for both modes)
-    model_name: str = "gemini-2.5-flash"
+    model_name: str = "gemini-3.5-flash"
 ```
 
-#### [NEW] [.env.example](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/.env.example)
+#### [NEW] [.env.example]
 
 ```env
 # ============================================
@@ -323,22 +317,21 @@ TIMEZONE=Australia/Brisbane
 
 ### Component 2: Authentication & Services
 
-#### [NEW] [src/services/auth.py](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/src/services/auth.py)
+#### [NEW] [src/services/auth.py]
 
 OAuth 2.0 credential management:
 - **Local dev**: Loads tokens from `credentials/token.json` (created by one-time OAuth flow)
 - **Production**: Loads stored OAuth tokens from Secret Manager
 - Refreshes expired tokens automatically
-- Scopes: Gmail (read/send), Calendar (read), Tasks (read), Photos (read), Blogger (write)
+- Scopes: Gmail (read/send), Calendar (read), Tasks (read), Blogger (write)
 
-#### [NEW] [src/services/state.py](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/src/services/state.py)
+#### [NEW] [src/services/state.py]
 
 State management with dual backends:
 - **Local dev**: SQLite file (`data/agent_state.db`) — zero setup
 - **Production**: Firestore — scalable, serverless
 - Tracks last-processed email/event IDs (deduplication)
 - Stores daily digest summaries for weekly rollup
-- Caches photo metadata to avoid re-processing
 
 ---
 
@@ -346,7 +339,7 @@ State management with dual backends:
 
 Each tool is implemented as an ADK-compatible `FunctionTool` that the agents can invoke.
 
-#### [NEW] [src/tools/gmail_tool.py](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/src/tools/gmail_tool.py)
+#### [NEW] [src/tools/gmail_tool.py]
 
 | Function | Description |
 |---|---|
@@ -394,7 +387,7 @@ EMAIL_SKIP_SENDERS = [
 > - **This system** → Personal assistant (reads only actionable/personal emails)
 > - **Future system** → Email manager (labels, groups, summarizes, and cleans up the rest)
 
-#### [NEW] [src/tools/calendar_tool.py](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/src/tools/calendar_tool.py)
+#### [NEW] [src/tools/calendar_tool.py]
 
 | Function | Description |
 |---|---|
@@ -402,7 +395,7 @@ EMAIL_SKIP_SENDERS = [
 | `get_upcoming_events(days)` | Events for the next N days |
 | `get_reminders()` | Payment reminders and recurring events |
 
-#### [NEW] [src/tools/tasks_tool.py](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/src/tools/tasks_tool.py)
+#### [NEW] [src/tools/tasks_tool.py]
 
 | Function | Description |
 |---|---|
@@ -410,19 +403,8 @@ EMAIL_SKIP_SENDERS = [
 | `get_due_today()` | Tasks due today |
 | `get_overdue_tasks()` | Overdue tasks requiring attention |
 
-#### [NEW] [src/tools/photos_tool.py](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/src/tools/photos_tool.py)
 
-| Function | Description |
-|---|---|
-| `get_today_photos()` | Photos taken/uploaded today with metadata |
-| `get_photos_for_date(date)` | Photos for a specific date |
-| `download_photo(media_item_id)` | Download photo and extract EXIF GPS data |
-| `describe_photo(media_item_id)` | Use Gemini Vision to describe a photo |
-
-> [!NOTE]
-> `describe_photo` sends the photo binary to Gemini Vision for a natural-language description. In both Mode A (Gemini API) and Mode B (Vertex AI), the data stays within Google's infrastructure — no PII leaves the boundary.
-
-#### [NEW] [src/tools/docs_tool.py](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/src/tools/docs_tool.py)
+#### [NEW] [src/tools/docs_tool.py]
 
 Google Docs blog creation (dev/personal mode) — uses the **Drive API** HTML-to-Docs conversion for rich formatting:
 
@@ -435,7 +417,7 @@ Google Docs blog creation (dev/personal mode) — uses the **Drive API** HTML-to
 > [!TIP]
 > The **HTML-to-Docs conversion** method (uploading HTML via Drive API with MIME type `application/vnd.google-apps.document`) is used instead of raw `batchUpdate` index manipulation. This is simpler, more reliable, and handles headings, bold, images, and formatting automatically.
 
-#### [NEW] [src/tools/blogger_tool.py](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/src/tools/blogger_tool.py)
+#### [NEW] [src/tools/blogger_tool.py]
 
 Blogger post creation (production mode) — all posts created as **drafts** for your review:
 
@@ -448,7 +430,7 @@ Blogger post creation (production mode) — all posts created as **drafts** for 
 
 ### Component 4: Agent Definitions (ADK)
 
-#### [NEW] [src/agents/coordinator.py](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/src/agents/coordinator.py)
+#### [NEW] [src/agents/coordinator.py]
 
 **Root Orchestrator** — Receives triggers from Cloud Scheduler and delegates to the appropriate sub-agent based on the trigger type:
 
@@ -458,7 +440,7 @@ from google.adk.agents import Agent, SequentialAgent
 
 coordinator = Agent(
     name="coordinator",
-    model="gemini-2.5-flash",
+    model="gemini-3.5-flash",
     description="Routes scheduled triggers to the appropriate sub-agent",
     sub_agents=[morning_feed_agent, journalist_agent, writer_agent],
 )
@@ -471,7 +453,7 @@ coordinator = Agent(
 | `evening_digest` | Journalist Agent → Writer Agent | Generate highlights → Write daily blog |
 | `weekly_report` | Writer Agent | Compile weekly activity report |
 
-#### [NEW] [src/agents/morning_feed.py](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/src/agents/morning_feed.py)
+#### [NEW] [src/agents/morning_feed.py]
 
 **🌅 Morning Feed Agent** — Your personal assistant for the day ahead.
 
@@ -502,14 +484,13 @@ coordinator = Agent(
 💡 TIP: You have a 3-hour gap between standup and dentist — perfect for the quarterly report!
 ```
 
-#### [NEW] [src/agents/journalist.py](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/src/agents/journalist.py)
+#### [NEW] [src/agents/journalist.py]
 
 **📰 Journalist Agent** — Reports highlights from your digital life.
 
 **Workflow:**
 1. Scan today's **personal/work emails** for notable threads (skips newsletters, blogs, ads, webinars)
 2. Review calendar events that occurred today
-3. Analyze all photos taken today (use Gemini Vision for descriptions)
 4. Use Gemini to identify the "top stories" of your day
 5. Send HTML highlight report to yourself
 
@@ -534,21 +515,19 @@ Your team approved the Q2 budget with a 15% increase!
 • ✅ Dentist appointment — checkup complete
 ```
 
-#### [NEW] [src/agents/writer.py](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/src/agents/writer.py)
+#### [NEW] [src/agents/writer.py]
 
 **✍️ Writer Agent** — Creates blog posts and weekly activity reports.
 
 **Daily Blog Workflow:**
 1. Receive highlight data from Journalist Agent (or re-query APIs)
-2. Download today's photos + extract GPS locations from EXIF data
-3. Use Gemini Vision to describe photos without location context
 4. Use Gemini to write a personal, narrative-style blog post
-5. Embed photos and location context into the narrative
+3. Embed location context into the narrative (if provided manually)
 6. Create as **draft** — Google Docs (dev) or Blogger (prod)
 
 **Weekly Report Workflow:**
 1. Query state store for the past 7 days of daily digests
-2. Aggregate calendar events, tasks completed, photos, key emails
+2. Aggregate calendar events, tasks completed, key emails
 3. Use Gemini to produce a structured weekly activity report
 4. Create as **draft** — Google Docs (dev) or Blogger (prod) with "Weekly Report" label
 
@@ -565,7 +544,7 @@ else:                                  # Production
 
 ### Component 5: API Server & Scheduling
 
-#### [NEW] [src/main.py](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/src/main.py)
+#### [NEW] [src/main.py]
 
 FastAPI application serving as the Cloud Run entrypoint:
 
@@ -625,7 +604,7 @@ Beautiful, responsive HTML email templates using inline CSS (for Gmail compatibi
 
 **What you get:** A daily 7 AM email with your calendar events, pending tasks, and a Gemini-composed briefing.
 
-**What you don't get (yet):** Email highlights, photo analysis, blog writing, EXIF GPS — those come in the full system.
+**What you don't get (yet):** Email highlights, photo analysis, blog writing — those come in the full system.
 
 #### Setup Steps
 
@@ -636,7 +615,7 @@ Beautiful, responsive HTML email templates using inline CSS (for Gmail compatibi
 5. Set a time-driven trigger for 7:00 AM
 6. Done ✅
 
-#### [NEW] [prototype/morning_feed.gs](file:///c:/Users/wangp/OneDrive/all%20about%20AI%20and%20Agentic%20AI/Cloud%20and%20AI%20Solutions/PersonalAssistantAgentSystem-GoogleStack/prototype/morning_feed.gs)
+#### [NEW] [prototype/morning_feed.gs]
 
 ```javascript
 // ============================================
@@ -734,7 +713,7 @@ Instructions:
 - Use emoji sparingly for visual structure
 - Keep it under 200 words`;
 
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
   const response = UrlFetchApp.fetch(url + '?key=' + GEMINI_API_KEY, {
     method: 'post',
     contentType: 'application/json',
@@ -801,7 +780,7 @@ function sendMorningEmail(dateStr, briefing) {
 1. Project setup (pyproject.toml, `.env`, directory structure)
 2. Configure Gemini API key (Mode A — from AI Studio)
 3. OAuth authentication flow (`scripts/setup_oauth.py`)
-4. Core Google API tools (Gmail, Calendar, Tasks, Photos)
+4. Core Google API tools (Gmail, Calendar, Tasks)
 5. Local testing of each tool with `adk web` (ADK dev UI)
 
 ### Phase 2: Agents (Day 3-4)
@@ -827,6 +806,18 @@ function sendMorningEmail(dateStr, briefing) {
 
 ---
 
+
+### Phase 5: Enhancement — Mobile Companion App (Photos Picker)
+Due to the March 2025 deprecation of the `photoslibrary.readonly` scope, automated background agents can no longer read a user's entire Google Photos library. 
+
+To bring photo enrichment back into the journal, we will build a separate, lightweight **Mobile App / Web App**:
+1. **Google Photos Picker API:** The app will use the new Picker API, allowing the user to manually select specific photos from their library on your phone.
+2. **Enrichment Flow:**
+   - The user selects photos.
+   - The app reads the EXIF/GPS data from the selected photos.
+   - The app uploads the selected photos to Google Drive or directly inserts them into the draft Google Doc/Blogger post.
+   - The app triggers the Writer Agent (via our FastAPI endpoint) to rewrite or enrich the draft journal with the newly selected photos and location context.
+
 ## Verification Plan
 
 ### Automated Tests
@@ -846,7 +837,6 @@ python scripts/test_local.py --agent writer_weekly
 ### Manual Verification
 - Verify morning feed email arrives in Gmail inbox
 - Verify Blogger posts are created correctly
-- Verify photo descriptions are accurate (Gemini Vision)
 - Verify no PII leaks via Cloud Audit Logs
 - Test Cloud Scheduler triggers in GCP Console
 
@@ -860,7 +850,7 @@ sequenceDiagram
     participant CR as Cloud Run
     participant COORD as Coordinator
     participant AGENT as Sub-Agent
-    participant GEMINI as Gemini 2.5 Flash
+    participant GEMINI as Gemini 3.5 Flash
     participant GAPI as Google APIs
     participant FS as State Store
 
