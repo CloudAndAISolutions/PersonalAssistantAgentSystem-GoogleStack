@@ -50,3 +50,13 @@ class TasksTool:
         # Sort: overdue first, then by title
         all_tasks.sort(key=lambda x: (not x['overdue'], x['title']))
         return all_tasks
+
+    def get_due_today(self):
+        """Fetches tasks due today specifically."""
+        now = datetime.now(self.timezone)
+        return [t for t in self.get_pending_tasks() if t['due'] == now.strftime("%b %d, %Y")]
+
+    def get_overdue_tasks(self):
+        """Fetches only the overdue tasks requiring attention."""
+        return [t for t in self.get_pending_tasks() if t['overdue']]
+
