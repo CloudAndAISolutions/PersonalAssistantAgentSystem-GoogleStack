@@ -8,7 +8,10 @@ class Config:
     """Application configuration loaded from environment variables."""
     
     # Model Selection
-    model_name = "gemini-2.5-flash"
+    # Primary model — used first on every run.
+    # If the primary returns a 503 (high demand), the runner falls back to fallback_model_name.
+    model_name          = "gemini-3.5-flash"
+    fallback_model_name = "gemini-2.5-flash"
     
     # AI Backend Strategy
     USE_VERTEXAI = os.getenv('GOOGLE_GENAI_USE_VERTEXAI', 'false').lower() == 'true'
@@ -24,6 +27,16 @@ class Config:
     # Application Settings
     _skip_senders_raw = os.getenv('EMAIL_SKIP_SENDERS', '')
     EMAIL_SKIP_SENDERS = [s.strip() for s in _skip_senders_raw.split(',')] if _skip_senders_raw else []
+
+    # Partner calendar filtering
+    # Set PARTNER_CALENDAR_ID in .env to the partner's Google calendar ID (e.g. their Gmail address)
+    # Events from that calendar whose titles match any PARTNER_EXCLUDE_CATEGORIES keyword are hidden.
+    PARTNER_CALENDAR_ID = os.getenv('PARTNER_CALENDAR_ID')  # no default — must be set in .env
+    _partner_exclude_raw = os.getenv(
+        'PARTNER_EXCLUDE_CATEGORIES',
+        'fitness,wellness,gym,yoga,pilates,crossfit,class,training,workout,exercise,heated,strength,cycling,spin,barre,dance,meditation,stretch,bootcamp,hiit,run,walk'
+    )
+    PARTNER_EXCLUDE_CATEGORIES = [s.strip().lower() for s in _partner_exclude_raw.split(',')]
     
     LOCAL_DB_PATH = os.getenv('LOCAL_DB_PATH', 'data/agent_state.db')
     

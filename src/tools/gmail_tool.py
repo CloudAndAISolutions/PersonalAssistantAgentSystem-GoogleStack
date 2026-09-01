@@ -95,3 +95,27 @@ class GmailTool:
 
         send_message = (self.service.users().messages().send(userId=self.user_id, body=create_message).execute())
         return send_message
+
+    def search_emails(self, query: str, max_results=10):
+        """Searches emails by Gmail query syntax (e.g. 'from:boss@company.com subject:Q2')."""
+        results = self.service.users().messages().list(
+            userId=self.user_id, q=query, maxResults=max_results
+        ).execute()
+        messages = results.get('messages', [])
+
+        emails = []
+        for msg in messages:
+            msg_data = self.service.users().messages().get(
+                userId=self.user_id, id=msg['id'],
+                format='metadata', metadataHeaders=['From', 'Subject', 'Date']
+            ).execute()
+            headers = msg_data.get('payload', {}).get('headers', [])
+            emails.append({
+                'id': msg['id'],
+                'snippet': msg_data.get('snippet', ''),
+                'from': next((h['value'] for h in headers if h['name'] == 'From'), 'Unknown'),
+                'subject': next((h['value'] for h in headers if h['name'] == 'Subject'), 'No Subject'),
+                'date': next((h['value'] for h in headers if h['name'] == 'Date'), 'Unknown')
+            })
+        return emails
+

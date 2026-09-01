@@ -38,12 +38,17 @@ def summarize_completed_tasks() -> str:
     # In a full implementation, you'd fetch tasks with 'showCompleted=True' and filter by 'completed' timestamp.
     return "Task tracking for completed items requires additional API logic. Skip for now."
 
-# Define the Journalist Agent
-journalist_agent = Agent(
-    name="journalist",
-    model=config.model_name if hasattr(config, 'model_name') else "gemini-3.5-flash",
-    description="Analyzes the day's digital footprint and extracts key factual bullet points.",
-    instruction="""
+def make_journalist_agent(name: str = "journalist") -> Agent:
+    """Factory that creates a fresh Journalist agent instance.
+    
+    ADK enforces a single-parent constraint, so each SequentialAgent that needs
+    a journalist must get its own instance via this factory.
+    """
+    return Agent(
+        name=name,
+        model=config.model_name,
+        description="Analyzes the day's digital footprint and extracts key factual bullet points.",
+        instruction="""
     You are an objective journalist observing the user's day.
     
     Workflow:
@@ -53,5 +58,8 @@ journalist_agent = Agent(
     4. Do NOT write prose. Do NOT write a blog post. Only output raw, structured facts.
     5. Pass this factual list back to the Coordinator so it can be sent to the Writer agent.
     """,
-    tools=[summarize_day_events, summarize_day_emails, summarize_completed_tasks]
-)
+        tools=[summarize_day_events, summarize_day_emails, summarize_completed_tasks]
+    )
+
+# Default instance (used by evening_flow in coordinator)
+journalist_agent = make_journalist_agent("journalist")

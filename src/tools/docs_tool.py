@@ -102,3 +102,50 @@ class DocsTool:
         except Exception as e:
             print(f"Error creating Google Doc: {e}")
             return {'status': 'error', 'message': str(e)}
+
+    def insert_image_to_doc(self, doc_id: str, image_url: str, index: int = 1):
+        """Inserts an image into an existing Google Doc at the given index.
+        
+        Uses the Docs API batchUpdate to insert an inline image.
+        Requires the google.adk.auth.documents scope.
+        """
+        from googleapiclient.discovery import build as build_service
+        docs_service = build_service('docs', 'v1', credentials=self.creds)
+        requests = [{
+            'insertInlineImage': {
+                'uri': image_url,
+                'location': {'index': index},
+                'objectSize': {
+                    'height': {'magnitude': 200, 'unit': 'PT'},
+                    'width': {'magnitude': 300, 'unit': 'PT'}
+                }
+            }
+        }]
+        try:
+            result = docs_service.documents().batchUpdate(
+                documentId=doc_id, body={'requests': requests}
+            ).execute()
+            return {'status': 'success', 'result': result}
+        except Exception as e:
+            return {'status': 'error', 'message': str(e)}
+
+    def list_blog_docs(self, folder_id: str = None):
+        """Lists all Google Docs in the output blog drafts folder."""
+        target_folder = folder_id or (
+            self._resolve_folder_id(config.GOOGLE_DOCS_OUTPUT_FOLDER_ID)
+            if config.GOOGLE_DOCS_OUTPUT_FOLDER_ID else None
+        )
+        query = "mimeType = 'application/vnd.google-apps.document' and trashed = false"
+        if target_folder:
+            query += f" and '{target_folder}' in parents"
+        try:
+            results = self.drive_service.files().list(
+                q=query,
+                spaces='drive',
+                fields='files(id, name, createdTime, webViewLink)',
+                orderBy='createdTime desc'
+            ).execute()
+            return results.get('files', [])
+        except Exception as e:
+            return []
+

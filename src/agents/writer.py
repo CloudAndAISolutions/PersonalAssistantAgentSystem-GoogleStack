@@ -9,8 +9,20 @@ docs_tool = DocsTool()
 def create_blog_draft(html_content: str) -> str:
     """Uploads the formatted blog post to Google Docs as a draft."""
     timezone = pytz.timezone('Australia/Brisbane')
-    date_str = datetime.now(timezone).strftime("%Y-%m-%d")
-    title = f"Daily Journal Draft - {date_str}"
+    now = datetime.now(timezone)
+    date_str  = now.strftime("%Y-%m-%d")
+    day_no    = now.strftime("%d").lstrip('0')           # removes leading zero: "02" → "2"
+    date_long = now.strftime(f"%A, {day_no} %B %Y")    # e.g. Tuesday, 2 September 2026
+    title = f"Daily Journal — {date_long}"
+
+    # Inject the date as a visible subtitle at the top of the document body
+    date_header = f'<h2 style="color:#888;font-weight:normal;margin-top:4px;">{date_long}</h2>\n'
+    if '<body' in html_content:
+        # Insert after <body> or <body ...>
+        import re
+        html_content = re.sub(r'(<body[^>]*>)', r'\1\n' + date_header, html_content, count=1)
+    else:
+        html_content = date_header + html_content
     
     result = docs_tool.create_blog_doc(title=title, html_content=html_content)
     

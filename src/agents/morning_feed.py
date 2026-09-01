@@ -3,6 +3,8 @@ from src.tools.gmail_tool import GmailTool
 from src.tools.calendar_tool import CalendarTool
 from src.tools.tasks_tool import TasksTool
 from src.services.config import config
+from datetime import datetime
+import pytz
 
 # Initialize tools
 gmail_tool = GmailTool()
@@ -43,38 +45,73 @@ def get_pending_tasks() -> str:
         result += f"- {overdue}{t['title']} (Due: {t['due']})\n"
     return result
 
-def send_morning_briefing(html_content: str) -> str:
-    """Sends the final HTML morning briefing to the user's email."""
-    # Note: Replace with actual email address or fetch from profile
-    # For now, we assume the user is sending it to themselves ('me')
+def compile_and_send_briefing(
+    events_summary: str,
+    tasks_summary: str,
+    emails_summary: str
+) -> str:
+    """Renders an HTML morning briefing from the three summaries and emails it to the user.
+    
+    Call this once you have the output of get_today_events, get_pending_tasks, and
+    get_unread_emails. Pass those raw text outputs directly as the three arguments.
+    Do NOT pre-render HTML yourself — this function handles all formatting.
+    
+    Args:
+        events_summary:  Raw text output from get_today_events().
+        tasks_summary:   Raw text output from get_pending_tasks().
+        emails_summary:  Raw text output from get_unread_emails().
+    """
+    timezone = pytz.timezone('Australia/Brisbane')
+    today = datetime.now(timezone).strftime("%A, %B %d")
+
+    # Build the HTML email internally
+    html = f"""
+    <html><body style="font-family:Arial,sans-serif;max-width:640px;margin:auto;color:#333;">
+    <h1 style="color:#f4a61e;">☀️ Good Morning! Here's your day — {today}</h1>
+    <hr/>
+
+    <h2>📅 Today's Schedule</h2>
+    <pre style="background:#f9f9f9;padding:12px;border-radius:6px;white-space:pre-wrap;">{events_summary}</pre>
+
+    <h2>📋 Tasks to Tackle</h2>
+    <pre style="background:#f9f9f9;padding:12px;border-radius:6px;white-space:pre-wrap;color:{'#c0392b' if '[OVERDUE]' in tasks_summary else '#333'};">{tasks_summary}</pre>
+
+    <h2>📧 Email Highlights</h2>
+    <pre style="background:#f9f9f9;padding:12px;border-radius:6px;white-space:pre-wrap;">{emails_summary}</pre>
+
+    <hr/>
+    <p style="color:#888;font-size:12px;">Sent by your Personal Assistant Agent · {today}</p>
+    </body></html>
+    """
+
     try:
         gmail_tool.send_email(
             to='me',
-            subject='🌅 Your Morning Briefing',
-            html_body=html_content
+            subject=f'☀️ Morning Briefing — {today}',
+            html_body=html
         )
-        return "Briefing sent successfully."
+        return "Morning briefing sent successfully to your inbox!"
     except Exception as e:
-        return f"Failed to send email: {str(e)}"
+        return f"Failed to send briefing: {str(e)}"
 
 # Define the Morning Feed Agent
 morning_feed_agent = Agent(
     name="morning_feed",
-    model=config.model_name if hasattr(config, 'model_name') else "gemini-3.5-flash",
+    model=config.model_name,
     description="Generates a daily morning briefing email based on calendar, tasks, and emails.",
     instruction="""
     You are a highly efficient personal assistant. Your job is to prepare a morning briefing.
     
-    Workflow:
+    Workflow — follow these steps in order:
     1. Call `get_today_events` to check the calendar.
-    2. Call `get_pending_tasks` to check for tasks, paying special attention to OVERDUE items.
+    2. Call `get_pending_tasks` to check for tasks (pay attention to [OVERDUE] items).
     3. Call `get_unread_emails` to find important emails.
-    4. Compile this information into a beautifully formatted HTML email. 
-       - Use headings (<h2>, <h3>).
-       - Highlight overdue tasks in bold red text.
-       - Group events chronologically.
-       - Keep it concise and uplifting.
-    5. Call `send_morning_briefing` with the HTML content to deliver it to the user.
+    4. Call `compile_and_send_briefing`, passing the raw text output of each of the above 
+       three calls directly as the three arguments:
+         - events_summary  = output of step 1
+         - tasks_summary   = output of step 2
+         - emails_summary  = output of step 3
+       Do NOT rewrite or format the content — pass it verbatim.
     """,
-    tools=[get_unread_emails, get_today_events, get_pending_tasks, send_morning_briefing]
+    tools=[get_unread_emails, get_today_events, get_pending_tasks, compile_and_send_briefing]
 )
