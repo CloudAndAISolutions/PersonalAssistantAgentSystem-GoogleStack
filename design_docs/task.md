@@ -54,3 +54,6 @@
 - [x] All PII removed from source code; sensitive values moved to `.env`
 - [x] Google Doc titles include human-readable date (e.g. "Daily Journal — Tuesday, 2 September 2026")
 
+# Phase 3: Local Integration
+- [x] `src/main.py` — FastAPI server with `/trigger/{agent_type}` and `/health` endpoints
+- [x] End-to-end local API testing (verified `/health` and `/trigger/morning_feed` trigger execute correctly via HTTP)
