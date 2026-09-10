@@ -10,7 +10,8 @@ SCOPES = [
     'https://www.googleapis.com/auth/calendar.readonly',  # To read calendar events
     'https://www.googleapis.com/auth/tasks.readonly',     # To read tasks
     'https://www.googleapis.com/auth/documents',          # To create/edit docs
-    'https://www.googleapis.com/auth/blogger'             # To create blogger posts
+    'https://www.googleapis.com/auth/blogger',            # To create blogger posts
+    'https://www.googleapis.com/auth/drive'               # To create files in Drive/Docs
 ]
 
 def main():

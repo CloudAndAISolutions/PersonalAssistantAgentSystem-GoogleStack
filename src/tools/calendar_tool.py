@@ -1,5 +1,6 @@
 from googleapiclient.discovery import build
 from src.services.auth import get_credentials
+from src.services.config import config
 from datetime import datetime, timedelta
 import pytz
 
@@ -32,6 +33,17 @@ class CalendarTool:
         # For now, it returns all events as reminders might just be regular events.
         return self.get_today_events()
 
+    def _is_partner_fitness_event(self, calendar_id: str, event_title: str) -> bool:
+        """Returns True if this event belongs to the partner's calendar AND
+        matches a fitness/wellness keyword that should be excluded.
+        """
+        if not config.PARTNER_CALENDAR_ID:
+            return False
+        if calendar_id.lower() != config.PARTNER_CALENDAR_ID.lower():
+            return False
+        title_lower = event_title.lower()
+        return any(kw in title_lower for kw in config.PARTNER_EXCLUDE_CATEGORIES)
+
     def _fetch_events(self, start_time: datetime, end_time: datetime):
         """Helper to fetch events across all calendars within a timeframe."""
         time_min = start_time.isoformat()
@@ -54,10 +66,16 @@ class CalendarTool:
             events = events_result.get('items', [])
             for event in events:
                 start = event['start'].get('dateTime', event['start'].get('date'))
+                title = event.get('summary', 'No Title')
+
+                # Skip partner's fitness/wellness events
+                if self._is_partner_fitness_event(calendar_id, title):
+                    continue
+
                 all_events.append({
                     'calendar': calendar_list_entry.get('summary', 'Unknown'),
                     'start': start,
-                    'title': event.get('summary', 'No Title'),
+                    'title': title,
                     'location': event.get('location', ''),
                     'description': event.get('description', '')
                 })
