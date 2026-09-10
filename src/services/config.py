@@ -40,6 +40,10 @@ class Config:
     
     LOCAL_DB_PATH = os.getenv('LOCAL_DB_PATH', 'data/agent_state.db')
     
+    # State Backend
+    USE_FIRESTORE = os.getenv('USE_FIRESTORE', 'false').lower() == 'true'
+    FIRESTORE_PROJECT_ID = os.getenv('FIRESTORE_PROJECT_ID', VERTEX_PROJECT_ID)
+    
     @classmethod
     def validate(cls):
         """Validates that required configuration is present."""
