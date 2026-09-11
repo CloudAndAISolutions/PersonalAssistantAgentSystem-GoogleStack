@@ -12,3 +12,6 @@ prototype/
 .git/
 .gitignore
 task.md
+# Secrets and local state — NEVER go in the image
+credentials/
+data/
