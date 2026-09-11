@@ -32,6 +32,20 @@ const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY'; // From aistudio.google.com/app/ap
 const MY_EMAIL = Session.getActiveUser().getEmail();
 const TIMEZONE = 'Australia/Brisbane';
 
+// ── Partner Calendar Filtering ────────────────────────────────────────────
+// Set PARTNER_CALENDAR_ID to your partner's Google Calendar ID (usually their
+// Gmail address). Events from that calendar whose title contains ANY keyword
+// from PARTNER_EXCLUDE_KEYWORDS will be silently excluded from your briefing.
+//
+// To find the calendar ID:
+//   → Google Calendar → ⚙️ next to the calendar → Settings → Calendar ID
+const PARTNER_CALENDAR_ID   = 'your.partner@gmail.com'; // ← update this
+const PARTNER_EXCLUDE_KEYWORDS = [
+  'fitness', 'wellness', 'gym', 'yoga', 'pilates', 'crossfit', 'class',
+  'training', 'workout', 'exercise', 'heated', 'strength', 'cycling', 'spin',
+  'barre', 'dance', 'meditation', 'stretch', 'bootcamp', 'hiit', 'run', 'walk'
+];
+
 /**
  * Main entry point — called by the time-driven trigger at 7 AM.
  * Fetches calendar events and tasks, composes a briefing with Gemini,
@@ -62,6 +76,10 @@ function morningFeed() {
 /**
  * Fetches all calendar events for the given date across all calendars.
  * Returns an array of event objects with time, title, location, description.
+ *
+ * Partner calendar filtering:
+ *   Events that come from PARTNER_CALENDAR_ID AND whose title matches any
+ *   keyword in PARTNER_EXCLUDE_KEYWORDS are silently excluded.
  */
 function getCalendarEvents(date) {
   const calendars = CalendarApp.getAllCalendars();
@@ -70,7 +88,20 @@ function getCalendarEvents(date) {
   
   let eventList = [];
   calendars.forEach(cal => {
+    const isPartnerCal = cal.getId().toLowerCase() === PARTNER_CALENDAR_ID.toLowerCase();
+
     cal.getEventsForDay(date).forEach(event => {
+      // ── Partner calendar filter ─────────────────────────────────────────
+      if (isPartnerCal) {
+        const titleLower = event.getTitle().toLowerCase();
+        const isExcluded = PARTNER_EXCLUDE_KEYWORDS.some(kw => titleLower.includes(kw));
+        if (isExcluded) {
+          Logger.log('Excluded partner event: ' + event.getTitle());
+          return; // skip this event
+        }
+      }
+      // ───────────────────────────────────────────────────────────────────
+
       const isAllDay = event.isAllDayEvent();
       const time = isAllDay 
         ? 'All Day' 

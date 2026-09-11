@@ -14,7 +14,8 @@ dependencies = [
     "fastapi>=0.100.0",
     "uvicorn>=0.20.0",
     "python-dotenv>=1.0.0",
-    "pytz>=2024.1"
+    "pytz>=2024.1",
+    "google-cloud-firestore>=2.11.0"
 ]
 
 [project.optional-dependencies]

@@ -57,3 +57,15 @@
 # Phase 3: Local Integration
 - [x] `src/main.py` — FastAPI server with `/trigger/{agent_type}` and `/health` endpoints
 - [x] End-to-end local API testing (verified `/health` and `/trigger/morning_feed` trigger execute correctly via HTTP)
+
+# Phase 4: Cloud Deployment
+- [x] Create `Dockerfile` and `.dockerignore` for Cloud Run
+- [x] Update `src/services/state.py` to support Firestore (production state backend)
+- [x] Create Terraform infrastructure (`deploy/terraform/`)
+  - [x] `main.tf` (Provider config)
+  - [x] `cloud_run.tf` (Cloud Run service)
+  - [x] `scheduler.tf` (4 Cloud Scheduler jobs: morning, evening, weekly report, weekly blogger)
+  - [x] `iam.tf` (Service accounts, IAM roles)
+  - [x] `secrets.tf` (Secret Manager for API keys and OAuth tokens)
+  - [x] `firestore.tf` (Firestore database for state)
+
