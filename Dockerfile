@@ -8,15 +8,17 @@ ENV PORT=8080
 # Create working directory
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies first (layer cached unless pyproject.toml changes)
 COPY pyproject.toml .
-# We use pip to install the current directory which reads pyproject.toml
 RUN pip install --no-cache-dir .
 
-# Copy application code
+# Copy application code only — NO credentials or .env files
+# OAuth token is injected at runtime from Google Secret Manager (GOOGLE_OAUTH_TOKEN_JSON)
+# Gemini API key is injected at runtime from Google Secret Manager (GEMINI_API_KEY)
 COPY src/ src/
-COPY data/ data/
-COPY credentials/ credentials/
+
+# Create empty data dir for SQLite (only used in local dev; prod uses Firestore)
+RUN mkdir -p data
 
 # Expose port
 EXPOSE 8080
