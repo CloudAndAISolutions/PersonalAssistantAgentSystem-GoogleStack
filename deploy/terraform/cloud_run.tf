@@ -46,7 +46,7 @@ resource "google_cloud_run_v2_service" "agent_service" {
         name = "GEMINI_API_KEY"
         value_source {
           secret_key_ref {
-            secret  = google_secret_manager_secret.gemini_api_key.secret_id
+            secret  = data.google_secret_manager_secret.gemini_api_key.secret_id
             version = "latest"
           }
         }
@@ -55,7 +55,7 @@ resource "google_cloud_run_v2_service" "agent_service" {
         name = "GOOGLE_OAUTH_TOKEN_JSON"
         value_source {
           secret_key_ref {
-            secret  = google_secret_manager_secret.oauth_token.secret_id
+            secret  = data.google_secret_manager_secret.oauth_token.secret_id
             version = "latest"
           }
         }
