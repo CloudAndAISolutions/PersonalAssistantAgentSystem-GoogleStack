@@ -67,4 +67,24 @@ resource "google_cloud_run_v2_service" "agent_service" {
     type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
     percent = 100
   }
+
+  # Ensure IAM bindings are applied BEFORE Cloud Run tries to pull secrets.
+  # Without this, Terraform may create the service in parallel with the IAM
+  # bindings, causing "Permission denied on secret" errors.
+  depends_on = [
+    google_project_iam_member.agent_secret_accessor,
+    google_project_iam_member.agent_datastore_user,
+    google_project_iam_member.agent_vertexai_user,
+  ]
 }
+
+# Allow Cloud Scheduler (and the github-actions SA used for OIDC) to invoke the service.
+# Without this, Scheduler jobs receive a 403 when calling the /trigger/* endpoints.
+resource "google_cloud_run_v2_service_iam_member" "scheduler_invoker" {
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.agent_service.name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${google_service_account.agent_sa.email}"
+}
+
