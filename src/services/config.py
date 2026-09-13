@@ -4,6 +4,12 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+def _strip_secret(secret: str) -> str:
+    """Strips whitespace and surrounding quotes from a secret string."""
+    if not secret:
+        return secret
+    return secret.strip().strip("'").strip('"')
+
 class Config:
     """Application configuration loaded from environment variables."""
     
