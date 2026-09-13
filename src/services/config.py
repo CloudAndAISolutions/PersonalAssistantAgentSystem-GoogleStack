@@ -15,7 +15,17 @@ class Config:
     
     # AI Backend Strategy
     USE_VERTEXAI = os.getenv('GOOGLE_GENAI_USE_VERTEXAI', 'false').lower() == 'true'
-    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+    
+    # We must overwrite os.environ because underlying SDKs (like google-genai)
+    # read directly from the environment and bypass our Config object.
+    _raw_api_key = os.getenv('GEMINI_API_KEY')
+    if _raw_api_key:
+        _clean_api_key = _strip_secret(_raw_api_key)
+        os.environ['GEMINI_API_KEY'] = _clean_api_key
+        GEMINI_API_KEY = _clean_api_key
+    else:
+        GEMINI_API_KEY = None
+        
     VERTEX_PROJECT_ID = os.getenv('VERTEX_PROJECT_ID')
     VERTEX_LOCATION = os.getenv('VERTEX_LOCATION', 'us-central1')
     
