@@ -3,16 +3,16 @@ name: Deploy to Google Cloud Run
 on:
   push:
     branches:
-      - main          # Auto-deploy on every push to main
-  workflow_dispatch:  # Allow manual trigger from GitHub Actions UI
+      - main # Auto-deploy on every push to main
+  workflow_dispatch: # Allow manual trigger from GitHub Actions UI
 
 env:
   # ── Set these as GitHub Variables (not secrets) ──────────────────────────
-  GCP_PROJECT_ID:         ${{ vars.GCP_PROJECT_ID }}
-  GCP_REGION:             ${{ vars.GCP_REGION }}             # e.g. us-central1
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ vars.GCP_REGION }} # e.g. us-central1
   ARTIFACT_REGISTRY_REPO: ${{ vars.ARTIFACT_REGISTRY_REPO }} # e.g. personal-agent
   # Full image path: <region>-docker.pkg.dev/<project>/<repo>/<image>
-  IMAGE_NAME:             ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/personal-assistant-agent
+  IMAGE_NAME: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/personal-assistant-agent
 
 jobs:
   # ── Job 1: Build and push the Docker image ────────────────────────────────
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write   # Required for Workload Identity Federation
+      id-token: write # Required for Workload Identity Federation
 
     outputs:
       image_digest: ${{ steps.push.outputs.digest }}
@@ -35,7 +35,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account:            ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
 
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
@@ -51,7 +51,7 @@ jobs:
           push: true
           tags: ${{ env.IMAGE_NAME }}:latest,${{ env.IMAGE_NAME }}:${{ github.sha }}
           cache-from: type=gha
-          cache-to:   type=gha,mode=max
+          cache-to: type=gha,mode=max
 
   # ── Job 2: Terraform plan + apply ─────────────────────────────────────────
   terraform:
@@ -74,7 +74,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account:            ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -91,9 +91,9 @@ jobs:
             -var="region=${{ env.GCP_REGION }}" \
             -var="image_tag=${{ env.IMAGE_NAME }}@${{ needs.build-and-push.outputs.image_digest }}" \
             -var="blog_backend=${{ vars.BLOG_BACKEND }}" \
-            -var="google_docs_folder_id=${{ vars.GOOGLE_DOCS_FOLDER_ID }}" \
-            -var="blogger_blog_id=${{ vars.BLOGGER_BLOG_ID }}" \
-            -var="partner_calendar_id=${{ vars.PARTNER_CALENDAR_ID }}" \
+            -var="google_docs_folder_id=${{ secrets.GOOGLE_DOCS_FOLDER_ID }}" \
+            -var="blogger_blog_id=${{ secrets.BLOGGER_BLOG_ID }}" \
+            -var="partner_calendar_id=${{ secrets.PARTNER_CALENDAR_ID }}" \
             -var="partner_exclude_categories=${{ vars.PARTNER_EXCLUDE_CATEGORIES }}" \
             -out=tfplan
 
