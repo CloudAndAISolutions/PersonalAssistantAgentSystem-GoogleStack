@@ -91,8 +91,8 @@ jobs:
             -var="region=${{ env.GCP_REGION }}" \
             -var="image_tag=${{ env.IMAGE_NAME }}@${{ needs.build-and-push.outputs.image_digest }}" \
             -var="blog_backend=${{ vars.BLOG_BACKEND }}" \
-            -var="google_docs_folder_id=${{ vars.GOOGLE_DOCS_FOLDER_ID }}" \
-            -var="blogger_blog_id=${{ vars.BLOGGER_BLOG_ID }}" \
+            -var="google_docs_folder_id=${{ secrets.GOOGLE_DOCS_FOLDER_ID }}" \
+            -var="blogger_blog_id=${{ secrets.BLOGGER_BLOG_ID }}" \
             -var="partner_calendar_id=${{ secrets.PARTNER_CALENDAR_ID }}" \
             -var="partner_exclude_categories=${{ vars.PARTNER_EXCLUDE_CATEGORIES }}" \
             -out=tfplan
