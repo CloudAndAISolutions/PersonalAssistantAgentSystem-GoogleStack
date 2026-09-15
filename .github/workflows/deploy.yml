@@ -99,3 +99,6 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
+
+      - name: Terraform state list
+        run: terraform state list
